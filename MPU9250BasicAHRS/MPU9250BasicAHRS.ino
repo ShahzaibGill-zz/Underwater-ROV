@@ -41,7 +41,7 @@ Adafruit_PCD8544 display = Adafruit_PCD8544(9, 8, 7, 5, 6);
 #endif // LCD
 
 #define AHRS true         // Set to false for basic data read
-#define SerialDebug true  // Set to true to get Serial output for debugging
+#define SerialDebug false  // Set to true to get Serial output for debugging
 
 // Pin definitions
 int intPin = 12;  // These can be changed, 2 and 3 are the Arduinos ext int pins
@@ -388,21 +388,21 @@ void loop()
       // Declination of SparkFun Electronics (40°05'26.6"N 105°11'05.9"W) is
       // 	8° 30' E  ± 0° 21' (or 8.5°) on 2016-07-19
       // - http://www.ngdc.noaa.gov/geomag-web/#declination
-      myIMU.yaw   -= 8.5;
+      myIMU.yaw   += 9.62;
       myIMU.roll  *= RAD_TO_DEG;
 
-      if(SerialDebug)
+      if(!SerialDebug)
       {
-        Serial.print("Yaw, Pitch, Roll: ");
+//        Serial.print("Yaw, Pitch, Roll: ");
         Serial.print(myIMU.yaw, 2);
         Serial.print(", ");
         Serial.print(myIMU.pitch, 2);
         Serial.print(", ");
         Serial.println(myIMU.roll, 2);
 
-        Serial.print("rate = ");
-        Serial.print((float)myIMU.sumCount/myIMU.sum, 2);
-        Serial.println(" Hz");
+//        Serial.print("rate = ");
+//        Serial.print((float)myIMU.sumCount/myIMU.sum, 2);
+//        Serial.println(" Hz");
       }
 
 #ifdef LCD
