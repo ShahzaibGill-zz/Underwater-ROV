@@ -5,7 +5,8 @@ MPU9250 myIMU;
 Madgwick filter;
 unsigned long microsPerReading, microsPrevious;
 float accelScale, gyroScale;
-
+boolean is_360_run = false;
+float roll, pitch, yaw;
 void setup() {
   Serial.begin(9600);
   Wire.begin();
@@ -20,14 +21,22 @@ void setup() {
   // initialize variables to pace updates to correct rate
   microsPerReading = 1000000 / 25;
   microsPrevious = micros();
+  delay(500);
 }
 
 void loop() {
+  if (!is_360_run)
+  {
+    turn_360();
+    is_360_run = true;
+  }
+}
+
+void measure() {
   int aix, aiy, aiz;
   int gix, giy, giz;
   float ax, ay, az;
   float gx, gy, gz;
-  float roll, pitch, yaw;
   unsigned long microsNow;
 
   // check if it's time to read data and update the filter
@@ -84,7 +93,7 @@ void loop() {
     pitch = filter.getPitch();
     yaw = filter.getYaw();
 //    Serial.print("Orientation: ");
-    Serial.println(yaw);
+//    Serial.println(yaw);
 //    Serial.print(" ");
 //    Serial.println(pitch);
 //    Serial.print(" ");
@@ -111,4 +120,28 @@ float convertRawGyro(int gRaw) {
   
   float g = (gRaw * 250.0) / 32768.0;
   return g;
+}
+
+void turn_360() {
+  measure();
+  float desired_yaw = yaw;
+  Serial.print("desired_yaw");
+  Serial.print(desired_yaw);
+  float current_yaw = yaw;
+  while ((current_yaw > (desired_yaw - 10)) && (current_yaw < (desired_yaw + 10)))
+  {
+    measure();
+    current_yaw = yaw;
+    Serial.print("Desired_yaw");
+    Serial.print(desired_yaw);
+    Serial.print("Current yaw");
+    Serial.print(current_yaw);
+  }
+  while (current_yaw < (desired_yaw - 5) || current_yaw > (desired_yaw + 5))
+  {
+    Serial.print("Moving till it goes 360");
+    measure();
+    current_yaw = yaw;
+  }
+  Serial.print("Your 360 should be completed");
 }
