@@ -114,6 +114,11 @@ void setup()
 void loop()
 {
   measure();
+//  delay(6000);
+//  if (!is_360_complete){
+//    run_360();
+//    is_360_complete = true;
+//  }
 }
 
 void measure()
@@ -309,20 +314,26 @@ void measure()
 
 void run_360()
 {
+  measure();
   int desired_yaw_value = myIMU.yaw;
+  Serial.print("Got our value as:");
+  Serial.print(" ,");
+  Serial.print(myIMU.yaw, 2);
+  delay(5000);
   int curr_yaw_val = 0;
   int counter = 0;
-  
-  while (curr_yaw_val > (desired_yaw_value + 10) || curr_yaw_val < (desired_yaw_value - 10) && counter < 1)
+  while ((curr_yaw_val > (desired_yaw_value + 10) || curr_yaw_val < (desired_yaw_value - 10)) && counter < 2)
   {
-    myMotor.write(100);
+//    myMotor.write(100);
     measure();
     curr_yaw_val = myIMU.yaw;
     if (curr_yaw_val > (desired_yaw_value + 10) || curr_yaw_val < (desired_yaw_value - 10)){
       counter += 1;
-      delay(200);
+      delay(2000);
     }
   }
 //  Stop motor
-  myMotor.write(95);
+//  myMotor.write(95);
+  Serial.print(curr_yaw_val, 2);
+  Serial.print("Done");
 }

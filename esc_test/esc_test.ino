@@ -63,7 +63,7 @@ void loop()
       int val = incomingString.toInt();
 
       //////////////Our change
-      val = 84;
+      val = 100;
     
       // print the integer
       Serial.println("Printing the value: ");
