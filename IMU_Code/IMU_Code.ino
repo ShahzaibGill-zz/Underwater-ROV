@@ -26,22 +26,23 @@ void setup() {
   // initialize variables to pace updates to correct rate
   microsPerReading = 1000000 / 25;
   microsPrevious = micros();
-  delay(500);
+  delay(2000);
 }
 
 void loop() {
-//  measure();
   if (!is_360_run)
   {
     turn_360();
+    Serial.println("Done 360 shit");
+    delay(3000);
     is_360_run = true;
-    run_motor(100,100);
-    delay(2000);
-    run_motor(95,95);
-    delay(2000);
-    run_motor(40,40);
-    delay(2000);
-    run_motor(95,95);
+    run_motor(110,70);
+    delay(3000);
+    run_motor(90,90);
+    delay(3000);
+    run_motor(70,110);
+    delay(3000);
+    run_motor(90,90);
   }
 }
 
@@ -106,7 +107,7 @@ void measure() {
     pitch = filter.getPitch();
     yaw = filter.getYaw();
 //    Serial.print("Orientation: ");
-//    Serial.println(yaw);
+    Serial.println(yaw);
 //    Serial.print(" ");
 //    Serial.println(pitch);
 //    Serial.print(" ");
@@ -149,13 +150,17 @@ void turn_360() {
     Serial.println(desired_yaw);
     Serial.println("Current yaw");
     Serial.println(current_yaw);
+    MOTOR1.write(100);
   }
   while (current_yaw < (desired_yaw - 5) || current_yaw > (desired_yaw + 5))
   {
     Serial.println("Moving till it goes 360");
     measure();
     current_yaw = yaw;
+    MOTOR1.write(100);
   }
+//Stop the motor
+  MOTOR1.write(90);
   Serial.println("Your 360 should be completed");
 }
 
