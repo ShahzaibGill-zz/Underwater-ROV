@@ -35,6 +35,13 @@ void loop() {
   {
     turn_360();
     is_360_run = true;
+    run_motor(100,100);
+    delay(2000);
+    run_motor(95,95);
+    delay(2000);
+    run_motor(40,40);
+    delay(2000);
+    run_motor(95,95);
   }
 }
 
