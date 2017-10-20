@@ -1,7 +1,10 @@
 #include <MadgwickAHRS.h>
 #include "MPU9250.h"
+#include <Servo.h>
 
 MPU9250 myIMU;
+Servo MOTOR1;
+Servo MOTOR2;
 Madgwick filter;
 unsigned long microsPerReading, microsPrevious;
 float accelScale, gyroScale;
@@ -10,6 +13,8 @@ float roll, pitch, yaw;
 void setup() {
   Serial.begin(9600);
   Wire.begin();
+  MOTOR1.attach(12);
+  MOTOR2.attach(11);
 
   // Calibrate gyro and accelerometers, load biases in bias registers
   myIMU.calibrateMPU9250(myIMU.gyroBias, myIMU.accelBias);
@@ -145,4 +150,12 @@ void turn_360() {
     current_yaw = yaw;
   }
   Serial.println("Your 360 should be completed");
+}
+
+
+void run_motor(int m1val, int m2val)
+{
+  MOTOR1.write(m1val);
+  MOTOR2.write(m2val);
+
 }
