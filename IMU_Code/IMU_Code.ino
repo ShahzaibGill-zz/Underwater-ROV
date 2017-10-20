@@ -1,14 +1,20 @@
 #include <MadgwickAHRS.h>
 #include "MPU9250.h"
+#include <Servo.h>
 
 MPU9250 myIMU;
+Servo MOTOR1;
+Servo MOTOR2;
 Madgwick filter;
 unsigned long microsPerReading, microsPrevious;
 float accelScale, gyroScale;
-
+boolean is_360_run = false;
+float roll, pitch, yaw;
 void setup() {
   Serial.begin(9600);
   Wire.begin();
+  MOTOR1.attach(12);
+  MOTOR2.attach(11);
 
   // Calibrate gyro and accelerometers, load biases in bias registers
   myIMU.calibrateMPU9250(myIMU.gyroBias, myIMU.accelBias);
@@ -20,14 +26,30 @@ void setup() {
   // initialize variables to pace updates to correct rate
   microsPerReading = 1000000 / 25;
   microsPrevious = micros();
+  delay(500);
 }
 
 void loop() {
+//  measure();
+  if (!is_360_run)
+  {
+    turn_360();
+    is_360_run = true;
+    run_motor(100,100);
+    delay(2000);
+    run_motor(95,95);
+    delay(2000);
+    run_motor(40,40);
+    delay(2000);
+    run_motor(95,95);
+  }
+}
+
+void measure() {
   int aix, aiy, aiz;
   int gix, giy, giz;
   float ax, ay, az;
   float gx, gy, gz;
-  float roll, pitch, yaw;
   unsigned long microsNow;
 
   // check if it's time to read data and update the filter
@@ -84,7 +106,7 @@ void loop() {
     pitch = filter.getPitch();
     yaw = filter.getYaw();
 //    Serial.print("Orientation: ");
-    Serial.println(yaw);
+//    Serial.println(yaw);
 //    Serial.print(" ");
 //    Serial.println(pitch);
 //    Serial.print(" ");
@@ -111,4 +133,36 @@ float convertRawGyro(int gRaw) {
   
   float g = (gRaw * 250.0) / 32768.0;
   return g;
+}
+
+void turn_360() {
+  measure();
+  float desired_yaw = yaw;
+  Serial.print("desired_yaw");
+  Serial.print(desired_yaw);
+  float current_yaw = yaw;
+  while ((current_yaw > (desired_yaw - 10)) && (current_yaw < (desired_yaw + 10)))
+  {
+    measure();
+    current_yaw = yaw;
+    Serial.println("Desired_yaw");
+    Serial.println(desired_yaw);
+    Serial.println("Current yaw");
+    Serial.println(current_yaw);
+  }
+  while (current_yaw < (desired_yaw - 5) || current_yaw > (desired_yaw + 5))
+  {
+    Serial.println("Moving till it goes 360");
+    measure();
+    current_yaw = yaw;
+  }
+  Serial.println("Your 360 should be completed");
+}
+
+
+void run_motor(int m1val, int m2val)
+{
+  MOTOR1.write(m1val);
+  MOTOR2.write(m2val);
+
 }
