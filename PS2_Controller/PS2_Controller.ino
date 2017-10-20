@@ -6,10 +6,13 @@
  *   - 2e colmun: Stef?
  * replace pin numbers by the ones you use
  ******************************************************************/
-#define PS2_DAT        13  //14    
-#define PS2_CMD        11  //15
-#define PS2_SEL        10  //16
-#define PS2_CLK        12  //17
+#define PS2_DAT        13  //14  brown from controller - pink/red inbetween/ - red to pull up - green on arduino   
+#define PS2_CMD        11  //15  orange on controller - brown on teather - orange on arduino
+#define PS2_SEL        10  //16  yellow - pink and yellow -yellow on arduino
+#define PS2_CLK        12  //17  pruple PS2 - white - orange/gold - brown
+
+//GND black on controller - green - green
+//PWR - red-black-green/white-white 
 
 /******************************************************************
  * select modes of PS2 controller:
@@ -48,6 +51,12 @@
 #define MOTOR_L_STOP_FORW_LIM 95
 #define MOTOR_L_STOP_BACK_LIM 75
 
+ /******************************************************************
+ * define Motor command values
+ ******************************************************************/
+#define MAX_THROTTLE 127
+
+
 PS2X ps2x; // create PS2 Controller Class
 
 //right now, the library does NOT support hot pluggable controllers, meaning 
@@ -57,7 +66,7 @@ PS2X ps2x; // create PS2 Controller Class
 int error = 0;
 byte type = 0;
 byte vibrate = 0;
-int throttle_cmd, l_mtr_cmd, r_mtr_cmd; 
+
 
 void setup(){
  
@@ -124,106 +133,122 @@ void loop() {
     return; 
 
   //if (type == 1) { //DualShock Controller
+  int l_mtr_cmd, r_mtr_cmd; 
   ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
+
+  generateMotorCmd(l_mtr_cmd, r_mtr_cmd); 
   
-  l_mtr_cmd = generateThrottleCmd(PSS_LY_FORW_FULL, PSS_LY_BACK_FULL, PSS_LY_CENTRE_FORW_LIM, PSS_LY_CENTRE_BACK_LIM, 
-                                    MOTOR_FORW_FULL, MOTOR_BACK_FULL, MOTOR_L_STOP_FORW_LIM, MOTOR_L_STOP_BACK_LIM);  
-  r_mtr_cmd = generateThrottleCmd(PSS_LY_FORW_FULL, PSS_LY_BACK_FULL, PSS_LY_CENTRE_FORW_LIM, PSS_LY_CENTRE_BACK_LIM, 
-                                    MOTOR_FORW_FULL, MOTOR_BACK_FULL, MOTOR_R_STOP_FORW_LIM, MOTOR_R_STOP_BACK_LIM);
+  //Serial.println(l_mtr_cmd, DEC); 
   
-  //generateMotorCmd(l_mtr_cmd, r_mtr_cmd); 
-  
-  //Serial.println(ps2x.Analog(PSS_RX), DEC); 
-  /*
   Serial.print("Left ");
   Serial.print(l_mtr_cmd, DEC);
   Serial.print(" Right ");
   Serial.println(r_mtr_cmd, DEC);
-  */
+  
   delay(50);  
 }
 
-int generateThrottleCmd(int cntrl_forw_full, int cntrl_back_full, int cntrl_centre_forw_lim, int cntrl_centre_back_lim, 
-                        int throttle_forw_full, int throttle_back_full, int throttle_stop_forw_lim, 
-                        int throttle_stop_back_lim){
-  
-  int cntrl_range = cntrl_forw_full - cntrl_back_full;
-  int cntrl_dir = cntrl_range / abs(cntrl_range);
-  double m, b;
-
-  int throttle_stop = (throttle_stop_forw_lim + throttle_stop_back_lim) / 2 ;
-  
-  int cntrl_cmd = ps2x.Analog(PSS_LY);
-      
-  if (cntrl_dir > 0){
-    if (cntrl_cmd >= cntrl_centre_back_lim && cntrl_cmd <= cntrl_centre_forw_lim){ 
-      return throttle_stop;
-    }
-    else if (cntrl_cmd > cntrl_centre_forw_lim) {
-      m = (throttle_forw_full - throttle_stop_forw_lim) * 1.0 / ( cntrl_forw_full - cntrl_centre_forw_lim);
-      b = throttle_forw_full - m * cntrl_forw_full;
-    }
-    else {
-      m = (throttle_back_full - throttle_stop_back_lim) * 1.0 / ( cntrl_back_full - cntrl_centre_back_lim);
-      b = throttle_back_full - m * cntrl_back_full;
-    }
-  }
-  else{
-    if (cntrl_cmd >= cntrl_centre_forw_lim && cntrl_cmd <= cntrl_centre_back_lim){ 
-      return throttle_stop;
-    }
-    else if (cntrl_cmd < cntrl_centre_forw_lim) {
-      m = (throttle_forw_full - throttle_stop_forw_lim) * 1.0 / ( cntrl_forw_full - cntrl_centre_forw_lim);
-      b = throttle_forw_full - m * cntrl_forw_full;
-    }
-    else {
-      m = (throttle_back_full - throttle_stop_back_lim) * 1.0 / ( cntrl_back_full - cntrl_centre_back_lim);
-      b = throttle_back_full - m * cntrl_back_full;
-    }
-
-    return m * cntrl_cmd + b;
-  }
-}
-
-/*
 void generateMotorCmd(int& l_mtr_cmd, int& r_mtr_cmd){
-  int cntrl_range = PSS_RX_RIGHT_FULL - PSS_RX_LEFT_FULL;
-  int cntrl_dir = cntrl_range / abs(cntrl_range);
-  double m, b, scale;
+  int throttle, l_throttle, r_throttle;
 
-  //int throttle_stop = (throttle_stop_forw_lim + throttle_stop_back_lim) / 2 ;
+  throttle = generateThrottleCmd();
+  scaleThrottleForSteer(l_throttle, r_throttle, throttle); 
+  throttle2MotorCmd(l_throttle, r_throttle, l_mtr_cmd, r_mtr_cmd);
+}
+
+
+int generateThrottleCmd(){
+  int pss_ly = ps2x.Analog(PSS_LY);
+  double m;
+  int b; 
+
+  // Forward Motion
+  if(pss_ly > PSS_LY_CENTRE_FORW_LIM && pss_ly <= PSS_LY_FORW_FULL || 
+     pss_ly >= PSS_LY_FORW_FULL && pss_ly < PSS_LY_CENTRE_FORW_LIM){
+       
+    m = 1.0 * MAX_THROTTLE / (PSS_LY_FORW_FULL - PSS_LY_CENTRE_FORW_LIM);
+    b = -m * PSS_LY_CENTRE_FORW_LIM;
+  }
+
+  // Reverse Motion
+  else if(pss_ly >= PSS_LY_BACK_FULL && pss_ly < PSS_LY_CENTRE_BACK_LIM ||
+          pss_ly > PSS_LY_CENTRE_BACK_LIM && pss_ly <= PSS_LY_BACK_FULL){ 
+    m = -1.0 * MAX_THROTTLE / (PSS_LY_BACK_FULL - PSS_LY_CENTRE_BACK_LIM);
+    b = -m * PSS_LY_CENTRE_BACK_LIM;
+  }
+
+  // Standstill
+  else{
+   m = 0;
+   b = 0;
+  }
+  return m * pss_ly + b;
+}
+
+
+void scaleThrottleForSteer(int& l_throttle, int& r_throttle, int throttle){
+  int pss_rx = ps2x.Analog(PSS_RX);
+  double r_scale = 1.0, l_scale = 1.0;
   
-  int cntrl_cmd = ps2x.Analog(PSS_RX);
-      
-  if (cntrl_dir > 0){
-    if (cntrl_cmd >= PSS_RX_CENTRE_LEFT_LIM && cntrl_cmd <= PSS_RX_CENTRE_RIGHT_LIM){ 
-      return;
-    }
-    else if (cntrl_cmd > PSS_RX_CENTRE_RIGHT_LIM) {
-      m = 1.0 / ( PSS_RX_RIGHT_FULL - PSS_RX_CENTRE_RIGHT_LIM);
-      b = - m * PSS_RX_CENTRE_RIGHT_LIM;
-      r_mtr_cmd *= m * cntrl_cmd + b;
-    }
-    else {
-      m = 1.0 / ( PSS_RX_LEFT_FULL - PSS_RX_CENTRE_LEFT_LIM);
-      b = - m * PSS_RX_CENTRE_LEFT_LIM;
-      l_mtr_cmd *= m * cntrl_cmd + b;
-    }
+  // Turn Right
+  if(pss_rx > PSS_RX_CENTRE_RIGHT_LIM && pss_rx <= PSS_RX_RIGHT_FULL || 
+     pss_rx >= PSS_RX_RIGHT_FULL && pss_rx < PSS_RX_CENTRE_RIGHT_LIM){ 
+     r_scale = 1.0 * (pss_rx - PSS_RX_RIGHT_FULL) / (PSS_RX_CENTRE_RIGHT_LIM - PSS_RX_RIGHT_FULL);
+  }
+
+  // Turn Left
+  else if(pss_rx >= PSS_RX_LEFT_FULL && pss_rx < PSS_RX_CENTRE_LEFT_LIM || 
+          pss_rx > PSS_RX_CENTRE_LEFT_LIM && pss_rx <= PSS_RX_LEFT_FULL){ 
+     l_scale = 1.0 * (pss_rx - PSS_RX_LEFT_FULL) / (PSS_RX_CENTRE_LEFT_LIM - PSS_RX_LEFT_FULL);
+  }
+
+  l_throttle = l_scale * throttle;
+  r_throttle = r_scale * throttle;
+  return;
+}
+
+void throttle2MotorCmd(int l_throttle, int r_throttle, int& l_mtr_cmd, int& r_mtr_cmd){
+  double m_l, m_r;
+  int b_l, b_r;
+
+  //--- Left Motor ---//
+
+  if (l_throttle == 0){
+    l_mtr_cmd = (MOTOR_L_STOP_FORW_LIM + MOTOR_L_STOP_BACK_LIM) / 2;
   }
   else{
-    if (cntrl_cmd >= PSS_RX_CENTRE_RIGHT_LIM && cntrl_cmd <= PSS_RX_CENTRE_LEFT_LIM){
-      return; 
+    // Forward Motion
+    if (l_throttle > 0){
+      m_l = 1.0 * (MOTOR_FORW_FULL - MOTOR_L_STOP_FORW_LIM) / MAX_THROTTLE;
+      b_l = MOTOR_L_STOP_FORW_LIM;
     }
-    else if (cntrl_cmd < PSS_RX_CENTRE_RIGHT_LIM) {
-      m = 1.0 / ( PSS_RX_RIGHT_FULL - PSS_RX_CENTRE_RIGHT_LIM);
-      b = - m * PSS_RX_CENTRE_RIGHT_LIM;
-      r_mtr_cmd *= m * cntrl_cmd + b;
+  
+    // Backward Motion
+    else if (l_throttle < 0){
+      m_l = -1.0 * (MOTOR_BACK_FULL - MOTOR_L_STOP_BACK_LIM) / MAX_THROTTLE;
+      b_l = MOTOR_L_STOP_BACK_LIM;
     }
-    else {
-      m = 1.0 / ( PSS_RX_LEFT_FULL - PSS_RX_CENTRE_LEFT_LIM);
-      b = - m * PSS_RX_CENTRE_LEFT_LIM;
-      l_mtr_cmd *= m * cntrl_cmd + b;
+
+    l_mtr_cmd = m_l * l_throttle + b_l;
+
+  }
+  //--- Right Motor ---//
+  if (r_throttle == 0){
+    r_mtr_cmd = (MOTOR_R_STOP_FORW_LIM + MOTOR_R_STOP_BACK_LIM) / 2;
+  }
+  else{
+    // Forward Motion
+    if (r_throttle > 0){
+      m_r = 1.0 * (MOTOR_FORW_FULL - MOTOR_R_STOP_FORW_LIM) / MAX_THROTTLE;
+      b_r = MOTOR_R_STOP_FORW_LIM;
     }
-  }  
+
+    // Backward Motion
+    else if (r_throttle < 0){
+      m_r = -1.0 * (MOTOR_BACK_FULL - MOTOR_R_STOP_BACK_LIM) / MAX_THROTTLE;
+      b_r = MOTOR_R_STOP_BACK_LIM;
+    }
+
+     r_mtr_cmd = m_r * r_throttle + b_r;
+  }    
 }
-*/
