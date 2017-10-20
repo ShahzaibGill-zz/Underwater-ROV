@@ -25,6 +25,7 @@ void setup() {
 }
 
 void loop() {
+//  measure();
   if (!is_360_run)
   {
     turn_360();
@@ -132,16 +133,16 @@ void turn_360() {
   {
     measure();
     current_yaw = yaw;
-    Serial.print("Desired_yaw");
-    Serial.print(desired_yaw);
-    Serial.print("Current yaw");
-    Serial.print(current_yaw);
+    Serial.println("Desired_yaw");
+    Serial.println(desired_yaw);
+    Serial.println("Current yaw");
+    Serial.println(current_yaw);
   }
   while (current_yaw < (desired_yaw - 5) || current_yaw > (desired_yaw + 5))
   {
-    Serial.print("Moving till it goes 360");
+    Serial.println("Moving till it goes 360");
     measure();
     current_yaw = yaw;
   }
-  Serial.print("Your 360 should be completed");
+  Serial.println("Your 360 should be completed");
 }
