@@ -1,29 +1,46 @@
 #include <MadgwickAHRS.h>
 #include "MPU9250.h"
 #include <Servo.h>
+#include <PID_v1.h>
 
+// IMU VARIABLES
 MPU9250 myIMU;
-Servo MOTOR1;
-Servo MOTOR2;
 Madgwick filter;
 unsigned long microsPerReading, microsPrevious;
 float accelScale, gyroScale;
-boolean is_360_run = false;
-float roll, pitch, yaw;
+double roll, pitch, yaw;
+
+// MOTOR VARIABLES
+Servo MOTOR1;
+Servo MOTOR2;
+
+// PID VARIABLES
+double Setpoint, Input, Output;
+//Define the aggressive and conservative Tuning Parameters
+double aggKp=4, aggKi=0, aggKd=1;
+double consKp=1, consKi=0, consKd=0.25;
+//Specify the links and initial tuning parameters
+PID myPID(&Input, &Output, &Setpoint, consKp, consKi, consKd, DIRECT);
+
+
 void setup() {
   Serial.begin(9600);
   Wire.begin();
-  MOTOR1.attach(12);
-  MOTOR2.attach(11);
+//  MOTOR1.attach(12);
+//  MOTOR2.attach(11);
 
-  // Calibrate gyro and accelerometers, load biases in bias registers
+//INITIALIZE PID
+  Input = 0;
+  Setpoint = 0;
+  myPID.SetMode(AUTOMATIC);
+  myPID.SetOutputLimits(-180,180);
+
+// Calibrate gyro and accelerometers, load biases in bias registers
   myIMU.calibrateMPU9250(myIMU.gyroBias, myIMU.accelBias);
   myIMU.initMPU9250();
   // Get magnetometer calibration from AK8963 ROM
   myIMU.initAK8963(myIMU.magCalibration);
   filter.begin(25);
-
-  // initialize variables to pace updates to correct rate
   microsPerReading = 1000000 / 25;
   microsPrevious = micros();
   delay(2000);
@@ -31,6 +48,22 @@ void setup() {
 
 void loop() {
   measure();
+  Input = roll;
+
+  double difference = abs(Setpoint-Input);
+  if(difference<10)
+  {  //we're close to setpoint, use conservative tuning parameters
+    myPID.SetTunings(consKp, consKi, consKd);
+  }
+  else
+  {
+     //we're far from setpoint, use aggressive tuning parameters
+     myPID.SetTunings(aggKp, aggKi, aggKd);
+  }
+  myPID.Compute();
+  Serial.println(Input);
+  Serial.println(Output);
+  // Set output to Motors.
 }
 
 void measure() {
@@ -98,7 +131,9 @@ void measure() {
 //    Serial.print(" ");
 //    Serial.println(pitch);
 //    Serial.print(" ");
-    Serial.println(roll);
+    //Serial.println(roll);
+    Input = roll;
+    //Serial.println(Input);
 
     // increment previous time, so we keep proper pace
     microsPrevious = microsPrevious + microsPerReading;
@@ -123,36 +158,7 @@ float convertRawGyro(int gRaw) {
   return g;
 }
 
-void turn_360() {
-  measure();
-  float desired_yaw = yaw;
-  Serial.print("desired_yaw");
-  Serial.print(desired_yaw);
-  float current_yaw = yaw;
-  while ((current_yaw > (desired_yaw - 10)) && (current_yaw < (desired_yaw + 10)))
-  {
-    measure();
-    current_yaw = yaw;
-    Serial.println("Desired_yaw");
-    Serial.println(desired_yaw);
-    Serial.println("Current yaw");
-    Serial.println(current_yaw);
-    MOTOR1.write(175);
-  }
-  while (current_yaw < (desired_yaw - 5) || current_yaw > (desired_yaw + 5))
-  {
-    Serial.println("Moving till it goes 360");
-    measure();
-    current_yaw = yaw;
-    MOTOR1.write(175);
-  }
-//Stop the motor
-  MOTOR1.write(90);
-  Serial.println("Your 360 should be completed");
-}
-
-
-void run_motor(int m1val, int m2val)
+void run_motors(int m1val, int m2val)
 {
   MOTOR1.write(m1val);
   MOTOR2.write(m2val);
