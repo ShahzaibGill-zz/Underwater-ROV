@@ -6,7 +6,8 @@
 #include <Adafruit_BMP085_U.h>
 #include <Adafruit_L3GD20_U.h>
 #include <Adafruit_10DOF.h>
-
+#include <SparkFun_MS5803_I2C.h>
+/* IMU VARIABLES ------------------------------------------------------------------------ */
 /* Assign a unique ID to the sensors */
 Adafruit_10DOF                dof   = Adafruit_10DOF();
 Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(30301);
@@ -22,18 +23,25 @@ sensors_event_t bmp_event;
 sensors_vec_t   orientation;
 float pitch, roll, yaw;
 
-/**************************************************************************/
-/*!
-    @brief  Initialises all the sensors used by this example
-*/
-/**************************************************************************/
+/* PRESSURE SENSOR VARIABLES ------------------------------------------------------------------------ */
+MS5803 pressure_sensor(ADDRESS_HIGH);
+
+//Create variables to store results
+float temperature_c, temperature_f;
+double pressure_abs, pressure_relative, altitude_delta, pressure_baseline;
+
+// Create Variable to store altitude in (m) for calculations;
+double base_altitude = 329.0; // Altitude of Waterloo (m)
+
 void setup(void)
 {
   Serial.begin(115200);
-  Serial.println(F("Adafruit 10 DOF Pitch/Roll/Heading Example")); Serial.println("");
-  
-  /* Initialise the sensors */
-  initSensors();
+  /* Initialise the IMU sensors */
+//  initSensors();
+  /* Initialise the Pressure sensors */
+  pressure_sensor.reset();
+  pressure_sensor.begin();
+  pressure_baseline = pressure_sensor.getPressure(ADC_4096);
 }
 
 /**************************************************************************/
@@ -43,25 +51,25 @@ void setup(void)
 /**************************************************************************/
 void loop(void)
 {
-  measure();
-  pitch = orientation.roll;
-  roll = orientation.pitch;
-  yaw = orientation.heading;
-    /* 'orientation' should have valid .roll and .pitch fields */
-  Serial.print(F("Roll: "));
-  Serial.print(roll);
-  Serial.print(F("; "));
-  Serial.print(F("Pitch: "));
-  Serial.print(pitch);
-  Serial.print(F("; "));
-  Serial.print(F("Heading: "));
-  Serial.print(yaw);
-  Serial.print(F("; "));
+//  measure_imu();
+//  pitch = orientation.roll;
+//  roll = orientation.pitch;
+//  yaw = orientation.heading;
+//    /* 'orientation' should have valid .roll and .pitch fields */
+//  Serial.print(F("Roll: "));
+//  Serial.print(roll);
+//  Serial.print(F("; "));
+//  Serial.print(F("Pitch: "));
+//  Serial.print(pitch);
+//  Serial.print(F("; "));
+//  Serial.print(F("Heading: "));
+//  Serial.print(yaw);
+//  Serial.print(F("; "));
+  measure_pressure();
 }
 
-void measure()
+void measure_imu()
 {
-
   /* Calculate pitch and roll from the raw accelerometer data */
   accel.getEvent(&accel_event);
   dof.accelGetOrientation(&accel_event, &orientation);
@@ -93,6 +101,27 @@ void measure()
   delay(1000);
 }
 
+void measure_pressure() {
+  // Read pressure from the sensor in mbar.
+  pressure_abs = pressure_sensor.getPressure(ADC_4096);
+  // Let's do something interesting with our data.
+  
+  // Convert abs pressure with the help of altitude into relative pressure
+  // This is used in Weather stations.
+  pressure_relative = sealevel(pressure_abs, base_altitude);
+  // Taking our baseline pressure at the beginning we can find an approximate
+  // change in altitude based on the differences in pressure.   
+  altitude_delta = altitude(pressure_abs , pressure_baseline);
+
+  Serial.print("Pressure abs (mbar)= ");
+  Serial.println(pressure_abs);
+   
+  Serial.print("Pressure relative (mbar)= ");
+  Serial.println(pressure_relative); 
+  delay(1000);
+
+}
+
 void initSensors()
 {
   if(!accel.begin())
@@ -115,3 +144,18 @@ void initSensors()
   }
 }
 
+double sealevel(double P, double A)
+// Given a pressure P (mbar) taken at a specific altitude (meters),
+// return the equivalent pressure (mbar) at sea level.
+// This produces pressure readings that can be used for weather measurements.
+{
+  return(P/pow(1-(A/44330.0),5.255));
+}
+
+
+double altitude(double P, double P0)
+// Given a pressure measurement P (mbar) and the pressure at a baseline P0 (mbar),
+// return altitude (meters) above baseline.
+{
+  return(44330.0*(1-pow(P/P0,1/5.255)));
+}
