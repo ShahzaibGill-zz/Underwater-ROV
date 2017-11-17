@@ -1,5 +1,5 @@
 /*
-   - Pin 0 -> RO
+   - Pin 10 -> RO
    - 5V, GND -> VCC, GND
    - Open Serial Monitor, type in top window.
    - Other Serial Monitor will display value sent

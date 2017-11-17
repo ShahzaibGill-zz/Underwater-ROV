@@ -1,5 +1,5 @@
 /*
-   - Pin 1 -> DI
+   - Pin 11 -> DI
    - 5V, GND -> VCC, GND
    - Open Serial Monitor, type in top window.
    - Other Serial Monitor will display value sent
