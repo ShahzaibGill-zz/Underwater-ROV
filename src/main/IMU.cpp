@@ -3,6 +3,7 @@
 /* Constructor: IMU Sensor Initialization */
 IMU::IMU(void){};
 
+/* Initialize method is required instead of just using constructor because this needs to be run within Arduino setup() loop */ 
 void IMU::Initialize(void){
   if(!accel.begin())
   {
