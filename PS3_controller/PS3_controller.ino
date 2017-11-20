@@ -1,6 +1,10 @@
 // Pin decrelation
 #define SSerialRX              10  //Serial Receive pin
 #define SSerialTX              11  //Serial Transmit pin
+#define LEFT_M_PIN             5
+#define RIGHT_M_PIN            6
+#define FRONT_M_PIN            7
+#define BACK_M_PIN             8
 
 // Motor Threshold
 #define FULL_CCW_THROT         1000
@@ -25,6 +29,7 @@
 
 #include <PS3USB.h>
 #include <SoftwareSerial.h>
+#include <Servo.h>
 
 const float analong_throt_interval = float(1000)/(float)(2*FULL_DOWN); // 1000 - range of motor write values
 const float turn_scaling_interval = float(1)/float(2*FULL_RIGHT);
@@ -33,14 +38,14 @@ const float elevation_scaling_interval = float(1000)/float(2*MAX_PRESSED); //100
 USB Usb;
 PS3USB PS3(&Usb); // Create an instance of PS3
 SoftwareSerial RS485Serial(SSerialRX, SSerialTX); // RX, TX
+Servo right_motor, left_motor, back_motor, front_motor;
 
+int left_throt, right_throt, front_throt, back_throt; //Throttle applied to each motors
+char * write_to_mega[];
 
-int right_throt, left_throt, front_throt, back_throt; //Throttle applied to each motors
-int write_to_mega[4];
-
-// 
-void print_side_motor_values(int right,int left);
-void print_motor_values(int front, int back);
+//printing/testing functions 
+void print_motor_values(int left, int right, int front, int back);
+void wrtie_to_motor();
 
 // ROV motion functions
 void move_fwd();
@@ -48,15 +53,25 @@ void move_bkwd();
 void move_up();
 void move_down();
 
+// communication handlers
+void send_to_mega();
+
+
 
 void setup() {
   Serial.begin(9600);
   if (Usb.Init() == -1) {
     Serial.print(F("\r\nOSC did not start"));
-    while (1);
+    while (1)m;
   }
   Serial.print(F("\r\nPS3 USB Library Started"));
   RS485Serial.begin(4800); 
+  right_motor.attach(RIGHT_M_PIN);
+  left_motor.attach(LEFT_M_PIN);
+  back_motor.attach(FRONT_M_PIN);
+  right_motor.writeMicroseconds(FULL_STOP);
+  left_motor.writeMicroseconds(FULL_STOP);
+  back_motor.writeMicroseconds(FULL_STOP);
 }
 
 
@@ -85,24 +100,23 @@ void loop() {
   }
 
   print_motor_values(right_throt, left_throt, front_throt, back_throt);
+  wrtie_to_motor();
 
-  RS485Serial.write("test string");
-  delay(300);
+
 }
 
 
-// ---------------------- HELPER functions for motion ---------------------------//
-
-void print_motor_values(int right,int left, int front, int back){
-    Serial.print(F("\r\n: left "));
-    Serial.print(left);
-    Serial.print(F("\r: right "));
-    Serial.print(right);
-    Serial.print(F("\r: front "));
-    Serial.print(front);
-    Serial.print(F("\r: back"));
-    Serial.print(back);
+// ---------------------- HELPER functions -  communication ---------------------------//
+void send_to_mega(){
+  //
+  // if (Serial.available())
+  //  {
+  //    byteReceived = Serial.read();
+  //    RS485Serial.write(byteReceived);          // Send byte to Remote Arduino
+  //  }
 }
+
+// ---------------------- HELPER functions -  motion ---------------------------//
 
 void move_fwd(){
   if(PS3.getAnalogHat(RightHatY) < NOT_USED_SCALE1){ // check FWD motion in f'ns as well
@@ -139,4 +153,24 @@ void move_up(){
 void move_down(){
   front_throt = (float)FULL_STOP - (float)PS3.getAnalogButton(L2)* elevation_scaling_interval;
   back_throt = (float)FULL_STOP - (float)PS3.getAnalogButton(L2)* elevation_scaling_interval;
+}
+
+// ---------------------- TESTING functions - remove in final design ---------------------------//
+
+void print_motor_values(int left,int right, int front, int back){
+    Serial.print(F("\r\n: left "));
+    Serial.print(left);
+    Serial.print(F("\r: right "));
+    Serial.print(right);
+    Serial.print(F("\r: front "));
+    Serial.print(front);
+    Serial.print(F("\r: back"));
+    Serial.print(back);
+}
+
+void wrtie_to_motor(){
+  left_motor.writeMicroseconds(left_throt);
+  right_motor.writeMicroseconds(right_throt);
+  front_motor.writeMicroseconds(front_motor);
+  back_motor.writeMicroseconds(back_motor);
 }
