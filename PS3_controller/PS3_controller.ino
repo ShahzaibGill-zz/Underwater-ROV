@@ -41,11 +41,12 @@ SoftwareSerial RS485Serial(SSerialRX, SSerialTX); // RX, TX
 Servo right_motor, left_motor, back_motor, front_motor;
 
 int left_throt, right_throt, front_throt, back_throt; //Throttle applied to each motors
-char * write_to_mega[];
+String write_to_RS_Serial;
+
 
 //printing/testing functions 
-void print_motor_values(int left, int right, int front, int back);
-void wrtie_to_motor();
+//void print_motor_values(int left, int right, int front, int back);
+void write_to_motor();
 
 // ROV motion functions
 void move_fwd();
@@ -57,31 +58,32 @@ void move_down();
 void send_to_mega();
 
 
-
 void setup() {
   Serial.begin(9600);
   if (Usb.Init() == -1) {
     Serial.print(F("\r\nOSC did not start"));
-    while (1)m;
+    while (1);
   }
   Serial.print(F("\r\nPS3 USB Library Started"));
-  RS485Serial.begin(4800); 
+  RS485Serial.begin(4800);
   right_motor.attach(RIGHT_M_PIN);
   left_motor.attach(LEFT_M_PIN);
+  front_motor.attach(FRONT_M_PIN);
   back_motor.attach(FRONT_M_PIN);
+  delay(1500); //ample delay
   right_motor.writeMicroseconds(FULL_STOP);
   left_motor.writeMicroseconds(FULL_STOP);
+  front_motor.writeMicroseconds(FULL_STOP);
   back_motor.writeMicroseconds(FULL_STOP);
 }
 
 
 void loop() {
   Usb.Task();
-
   // Get analog values to move and steer
-  if(PS3.getAnalogHat(RightHatY)  < NOT_USED_SCALE1){ // FWD case
+  if(PS3.getAnalogHat(LeftHatY)  < NOT_USED_SCALE1){ // FWD case
     move_fwd();
-  } else if(PS3.getAnalogHat(RightHatY) > NOT_USED_SCALE2){ // BKWD case
+  } else if(PS3.getAnalogHat(LeftHatY) > NOT_USED_SCALE2){ // BKWD case
      move_bkwd();
   }else{
      right_throt = FULL_STOP;
@@ -98,49 +100,51 @@ void loop() {
     front_throt = FULL_STOP;
     back_throt = FULL_STOP;
   }
-
-  print_motor_values(right_throt, left_throt, front_throt, back_throt);
-  wrtie_to_motor();
-
-
+  // print_motor_values(right_throt, left_throt, front_throt, back_throt);
+  // write_to_motor();
+   send_to_mega();
 }
 
 
 // ---------------------- HELPER functions -  communication ---------------------------//
 void send_to_mega(){
-  //
-  // if (Serial.available())
-  //  {
-  //    byteReceived = Serial.read();
-  //    RS485Serial.write(byteReceived);          // Send byte to Remote Arduino
-  //  }
+  if(left_throt == FULL_STOP && right_throt == FULL_STOP && front_throt == FULL_STOP &&  back_throt == FULL_STOP){
+    write_to_RS_Serial = String("*");
+  } else{
+    write_to_RS_Serial = String("(" +String(left_throt) + String(right_throt) + String(front_throt) + String(back_throt) + ")");
+  }
+  if (Serial.available())
+  {
+    RS485Serial.write(write_to_RS_Serial.c_str());          // Send byte to Remote Arduino
+  }
+  Serial.write(write_to_RS_Serial.c_str());
 }
 
 // ---------------------- HELPER functions -  motion ---------------------------//
 
 void move_fwd(){
-  if(PS3.getAnalogHat(RightHatY) < NOT_USED_SCALE1){ // check FWD motion in f'ns as well
+  if(PS3.getAnalogHat(LeftHatY) < NOT_USED_SCALE1){ // check FWD motion in f'ns as well
     // 128 -> 0 map to 1500 -> 2000 motr values - Use FULL_DOWN(255) as refernce point
-    right_throt = (float)FULL_STOP + ((float)FULL_DOWN - (float)PS3.getAnalogHat(RightHatY))* analong_throt_interval;
-    left_throt = (float)FULL_STOP + ((float)FULL_DOWN -  (float)PS3.getAnalogHat(RightHatY))* analong_throt_interval;
-    if(PS3.getAnalogHat(LeftHatX) < NOT_USED_SCALE1){ // left turn
+    right_throt = (float)FULL_STOP + ((float)FULL_DOWN - (float)PS3.getAnalogHat(LeftHatY))* analong_throt_interval;
+    left_throt = (float)FULL_STOP + ((float)FULL_DOWN -  (float)PS3.getAnalogHat(LeftHatY))* analong_throt_interval;
+    if(PS3.getAnalogHat(RightHatX) < NOT_USED_SCALE1){ // left turn
         // same logic as FWD motion - 128 -> 0 map to change in throttle 
-        left_throt = left_throt*(1.00 - ((float)FULL_RIGHT - (float)PS3.getAnalogHat(LeftHatX))*turn_scaling_interval*0.5);
-    } else if(PS3.getAnalogHat(LeftHatX) > NOT_USED_SCALE2){ // right turn
-        right_throt = right_throt*(1.00 - (float)PS3.getAnalogHat(LeftHatX)*turn_scaling_interval*0.5);
+        left_throt = left_throt*(1.00 - ((float)FULL_RIGHT - (float)PS3.getAnalogHat(RightHatX))*turn_scaling_interval*0.5);
+    } else if(PS3.getAnalogHat(RightHatX) > NOT_USED_SCALE2){ // right turn
+        right_throt = right_throt*(1.00 - (float)PS3.getAnalogHat(RightHatX)*turn_scaling_interval*0.5);
     }
   }
 }
 
 // Inverse FWD logic
 void move_bkwd(){
-  if(PS3.getAnalogHat(RightHatY) > NOT_USED_SCALE1){ //check BKWD motion in f'ns as well
-    right_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(RightHatY)* analong_throt_interval;
-    left_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(RightHatY)* analong_throt_interval;
-    if(PS3.getAnalogHat(LeftHatX) < NOT_USED_SCALE1){ // left turn
-        left_throt = left_throt*(1.00 + ((float)FULL_RIGHT - (float)PS3.getAnalogHat(LeftHatX))*turn_scaling_interval);
-    } else if(PS3.getAnalogHat(LeftHatX) > NOT_USED_SCALE2){ // right turn
-        right_throt = right_throt*(1.00 + (float)PS3.getAnalogHat(LeftHatX)*turn_scaling_interval);
+  if(PS3.getAnalogHat(LeftHatY) > NOT_USED_SCALE1){ //check BKWD motion in f'ns as well
+    right_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(LeftHatY)* analong_throt_interval;
+    left_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(LeftHatY)* analong_throt_interval;
+    if(PS3.getAnalogHat(RightHatX) < NOT_USED_SCALE1){ // left turn
+        left_throt = left_throt*(1.00 + ((float)FULL_RIGHT - (float)PS3.getAnalogHat(RightHatX))*turn_scaling_interval);
+    } else if(PS3.getAnalogHat(RightHatX) > NOT_USED_SCALE2){ // right turn
+        right_throt = right_throt*(1.00 + (float)PS3.getAnalogHat(RightHatX)*turn_scaling_interval);
     }
   }
 }
@@ -168,9 +172,9 @@ void print_motor_values(int left,int right, int front, int back){
     Serial.print(back);
 }
 
-void wrtie_to_motor(){
+void write_to_motor(){
   left_motor.writeMicroseconds(left_throt);
   right_motor.writeMicroseconds(right_throt);
-  front_motor.writeMicroseconds(front_motor);
-  back_motor.writeMicroseconds(back_motor);
+  front_motor.writeMicroseconds(front_throt);
+  back_motor.writeMicroseconds(back_throt);
 }
