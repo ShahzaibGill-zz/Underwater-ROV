@@ -69,7 +69,7 @@ void setup() {
   right_motor.attach(RIGHT_M_PIN);
   left_motor.attach(LEFT_M_PIN);
   front_motor.attach(FRONT_M_PIN);
-  back_motor.attach(FRONT_M_PIN);
+  back_motor.attach(BACK_M_PIN);
   delay(1500); //ample delay
   right_motor.writeMicroseconds(FULL_STOP);
   left_motor.writeMicroseconds(FULL_STOP);
@@ -100,10 +100,10 @@ void loop() {
     front_throt = FULL_STOP;
     back_throt = FULL_STOP;
   }
-  // print_motor_values(right_throt, left_throt, front_throt, back_throt);
-  // write_to_motor();
-   send_to_mega();
-   delay(300);
+   print_motor_values(left_throt, right_throt, front_throt, back_throt);
+   write_to_motor();
+//   send_to_mega();
+   delay(2000);
 }
 
 
