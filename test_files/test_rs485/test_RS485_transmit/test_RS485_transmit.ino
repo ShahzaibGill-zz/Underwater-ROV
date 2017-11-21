@@ -15,7 +15,7 @@
 SoftwareSerial RS485Serial(SSerialRX, SSerialTX); // RX, TX
 
 /*-----( Declare Variables )-----*/
-int byteReceived;
+
 int byteSend;
 
 void setup()   /****** SETUP: RUNS ONCE ******/
@@ -33,12 +33,12 @@ void setup()   /****** SETUP: RUNS ONCE ******/
 
 void loop()   /****** LOOP: RUNS CONSTANTLY ******/
 {
-  if (Serial.available())
-  {
-    byteReceived = Serial.read();
-
-    RS485Serial.write(byteReceived);          // Send byte to Remote Arduino
-  }
+//  if (Serial.available())
+//  {
+      String byteReceived= "[1234567890123456]";
+//    int byteReceived = Serial.read()    ;
+    RS485Serial.write(byteReceived.c_str());          // Send byte to Remote Arduino
+//  }
 
 
 }//--(end main loop )---
