@@ -1,83 +1,120 @@
-/*
-   - Pin 10 -> RO
-   - 5V, GND -> VCC, GND
-   - Open Serial Monitor, type in top window.
-   - Other Serial Monitor will display value sent
-*/
-
 /*-----( Import needed libraries )-----*/
 #include <SoftwareSerial.h>
+#include <Servo.h>
 /*-----( Declare Constants and Pin Numbers )-----*/
 #define SSerialRX        10  //Serial Receive pin
 #define SSerialTX        11  //Serial Transmit pin
+#define LEFT_M_PIN             5
+#define RIGHT_M_PIN            6
+#define FRONT_M_PIN            7
+#define BACK_M_PIN             8
+
+// Motor Threshold
+#define FULL_CCW_THROT         1100
+#define FULL_CW_THROT          1900
 
 /*-----( Declare objects )-----*/
 SoftwareSerial RS485Serial(SSerialRX, SSerialTX); // RX, TX
 
 /*-----( Declare Variables )-----*/
-char byteReceived;
-int byteSend;
-char MOTOR_VALUES[17];
-int index = 0;
+
+const int STOP_MOTOR = 1500;
+const int LEFT_MOTOR_INDEX = 0;
+const int RIGHT_MOTOR_INDEX = 4;
+const int FRONT_MOTOR_INDEX = 8;
+const int BACK_MOTOR_INDEX = 12;
+const char OPENING = '(';
+const char CLOSING = ')';
+const char IGNORE = '*';
 bool READ_MOTOR_VALUES = false;
 bool PARSE_VALUES = false;
-char OPENING = '(';
-char CLOSING = ')';
-long final_motor_values;
-int back_motor;
-int front_motor;
-int right_motor;
-int left_motor;
+Servo RIGHT_MOTOR, LEFT_MOTOR, BACK_MOTOR, FRONT_MOTOR;
 
 
-void setup()   /****** SETUP: RUNS ONCE ******/
+char charReceived;
+char motorValues[17];
+int index = 0;
+int backMotorValue;
+int frontMotorValue;
+int rightMotorValue;
+int leftMotorValue;
+
+
+void setup()
 {
-  // Start the built-in serial port, probably to Serial Monitor
   Serial.begin(9600);
   Serial.println("SerialRemote");  // Can be ignored
 
   // Start the software serial port, to another device
   RS485Serial.begin(4800);   // set the data rate
-}//--(end setup )---
+  RIGHT_MOTOR.attach(RIGHT_M_PIN);
+  LEFT_MOTOR.attach(LEFT_M_PIN);
+  FRONT_MOTOR.attach(FRONT_M_PIN);
+  BACK_MOTOR.attach(BACK_M_PIN);
+  delay(500);
+}
 
 
-void loop()   /****** LOOP: RUNS CONSTANTLY ******/
+void loop()
 {
-  //Copy input data to output
   if (RS485Serial.available())
   {
-    byteReceived = RS485Serial.read();   // Read the byte
-    if (byteReceived == CLOSING)
+    charReceived = RS485Serial.read();
+//    Serial.print(charReceived);
+    if (charReceived == CLOSING)
     {
       READ_MOTOR_VALUES = false;
       PARSE_VALUES = true;
-    }
+    }  
     if (READ_MOTOR_VALUES) {
-      MOTOR_VALUES[index++] = byteReceived;
-//      Serial.print(MOTOR_VALUES);
+      motorValues[index++] = charReceived;
     }
     if (PARSE_VALUES) {
-      left_motor = getMotorValue(MOTOR_VALUES, 0);
-      right_motor = getMotorValue(MOTOR_VALUES, 4);
-      front_motor = getMotorValue(MOTOR_VALUES, 8);
-      back_motor = getMotorValue(MOTOR_VALUES, 12);
+      leftMotorValue = getMotorValue(motorValues, LEFT_MOTOR_INDEX);
+      rightMotorValue = getMotorValue(motorValues, RIGHT_MOTOR_INDEX);
+      frontMotorValue = getMotorValue(motorValues, FRONT_MOTOR_INDEX);
+      backMotorValue = getMotorValue(motorValues, BACK_MOTOR_INDEX);
       PARSE_VALUES = false;
       index = 0;
+      print_motor_values(leftMotorValue,rightMotorValue,frontMotorValue,backMotorValue);
     }
-//    Serial.write(left_motor);   // Show on Serial Monitor
-    if (byteReceived == OPENING)
+    if (charReceived == OPENING)
     {
       READ_MOTOR_VALUES = true;
     }
-  }// End If RS485SerialAvailable
-  
-}//--(end main loop )---
+    if (charReceived == IGNORE){
+      leftMotorValue = STOP_MOTOR;
+      rightMotorValue = STOP_MOTOR;
+      frontMotorValue = STOP_MOTOR;
+      backMotorValue = STOP_MOTOR;
+    }
+  } 
+}
 
-
-int getMotorValue(char arr[], int index){
-  char motor_value[5];
+/* Given character array of all motor values, returns integer of a particular motor value */
+int getMotorValue(char allMotorValues[], int index){
+  char motorValue[4];
   for (int i = 0; i < 4; i++){
-    motor_value[i] = arr[index++];
+    motorValue[i] = allMotorValues[index++];
   };
-  return atoi(motor_value);
+  return atoi(motorValue);
+}
+
+void writeToMotors(int leftMotorValueValue, int rightMotorValueValue, int frontMotorValue, int backMotorValueValue){
+  RIGHT_MOTOR.attach(RIGHT_M_PIN);
+  LEFT_MOTOR.attach(LEFT_M_PIN);
+  FRONT_MOTOR.attach(FRONT_M_PIN);
+  BACK_MOTOR.attach(BACK_M_PIN);
+}
+
+
+void print_motor_values(int left,int right, int front, int back){
+    Serial.print(F("\r\n: left "));
+    Serial.print(left);
+    Serial.print(F("\r: right "));
+    Serial.print(right);
+    Serial.print(F("\r: front "));
+    Serial.print(front);
+    Serial.print(F("\r: back"));
+    Serial.print(back);
 }

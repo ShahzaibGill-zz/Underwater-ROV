@@ -1,10 +1,10 @@
+#include <PS3USB.h>
+#include <SoftwareSerial.h>
+
+
 // Pin decrelation
 #define SSerialRX              10  //Serial Receive pin
 #define SSerialTX              3  //Serial Transmit pin
-#define LEFT_M_PIN             5
-#define RIGHT_M_PIN            6
-#define FRONT_M_PIN            7
-#define BACK_M_PIN             8
 
 // Motor Threshold
 #define FULL_CCW_THROT         1000
@@ -26,10 +26,6 @@
 #define MAX_PRESSED            255
 #define L2_THRESHOLD           30
 #define R2_THRESHOLD           30
-
-#include <PS3USB.h>
-#include <SoftwareSerial.h>
-#include <Servo.h>
 
 const float analong_throt_interval = float(1000)/(float)(2*FULL_DOWN); // 1000 - range of motor write values
 const float turn_scaling_interval = float(1)/float(2*FULL_RIGHT);
@@ -103,12 +99,12 @@ void loop()   /****** LOOP: RUNS CONSTANTLY ******/
   
   print_motor_values(left_throt, right_throt, front_throt, back_throt);
 ////   write_to_motor();
-////   send_to_mega();
+  send_to_mega();
 //  if (Serial.available())
 //  {
-      String byteReceived= "(1500200025003000)";
+//    String byteReceived= "(1500200025003000)";
 //    int byteReceived = Serial.read()    ;
-    RS485Serial.write(byteReceived.c_str());          // Send byte to Remote Arduino
+//    RS485Serial.write(byteReceived.c_str());          // Send byte to Remote Arduino
 //  }
 
 
