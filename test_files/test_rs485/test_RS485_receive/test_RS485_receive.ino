@@ -15,8 +15,20 @@
 SoftwareSerial RS485Serial(SSerialRX, SSerialTX); // RX, TX
 
 /*-----( Declare Variables )-----*/
-int byteReceived;
+char byteReceived;
 int byteSend;
+char MOTOR_VALUES[17];
+int index = 0;
+bool READ_MOTOR_VALUES = false;
+bool PARSE_VALUES = false;
+char OPENING = '(';
+char CLOSING = ')';
+long final_motor_values;
+int back_motor;
+int front_motor;
+int right_motor;
+int left_motor;
+
 
 void setup()   /****** SETUP: RUNS ONCE ******/
 {
@@ -35,8 +47,37 @@ void loop()   /****** LOOP: RUNS CONSTANTLY ******/
   if (RS485Serial.available())
   {
     byteReceived = RS485Serial.read();   // Read the byte
-    Serial.write(byteReceived);   // Show on Serial Monitor
-
+    if (byteReceived == CLOSING)
+    {
+      READ_MOTOR_VALUES = false;
+      PARSE_VALUES = true;
+    }
+    if (READ_MOTOR_VALUES) {
+      MOTOR_VALUES[index++] = byteReceived;
+//      Serial.print(MOTOR_VALUES);
+    }
+    if (PARSE_VALUES) {
+      left_motor = getMotorValue(MOTOR_VALUES, 0);
+      right_motor = getMotorValue(MOTOR_VALUES, 4);
+      front_motor = getMotorValue(MOTOR_VALUES, 8);
+      back_motor = getMotorValue(MOTOR_VALUES, 12);
+      PARSE_VALUES = false;
+      index = 0;
+    }
+//    Serial.write(left_motor);   // Show on Serial Monitor
+    if (byteReceived == OPENING)
+    {
+      READ_MOTOR_VALUES = true;
+    }
   }// End If RS485SerialAvailable
-
+  
 }//--(end main loop )---
+
+
+int getMotorValue(char arr[], int index){
+  char motor_value[5];
+  for (int i = 0; i < 4; i++){
+    motor_value[i] = arr[index++];
+  };
+  return atoi(motor_value);
+}

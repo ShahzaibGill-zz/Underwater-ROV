@@ -61,49 +61,49 @@ void send_to_mega();
 void setup() {
   Serial.begin(9600);
   RS485Serial.begin(4800);
-  if (Usb.Init() == -1) {
-    Serial.print(F("\r\nOSC did not start"));
-    while (1);
-  }
+//  if (Usb.Init() == -1) {
+//    Serial.print(F("\r\nOSC did not start"));
+//    while (1);
+//  }
   Serial.print(F("\r\nPS3 USB Library Started"));
   right_motor.attach(RIGHT_M_PIN);
   left_motor.attach(LEFT_M_PIN);
   front_motor.attach(FRONT_M_PIN);
   back_motor.attach(BACK_M_PIN);
-  delay(1500); //ample delay
-  right_motor.writeMicroseconds(FULL_STOP);
-  left_motor.writeMicroseconds(FULL_STOP);
-  front_motor.writeMicroseconds(FULL_STOP);
-  back_motor.writeMicroseconds(FULL_STOP);
+//  delay(1500); //ample delay
+//  right_motor.writeMicroseconds(FULL_STOP);
+//  left_motor.writeMicroseconds(FULL_STOP);
+//  front_motor.writeMicroseconds(FULL_STOP);
+//  back_motor.writeMicroseconds(FULL_STOP);
 }
 
 
 void loop() {
-  Usb.Task();
-  // Get analog values to move and steer
-  if(PS3.getAnalogHat(LeftHatY)  < NOT_USED_SCALE1){ // FWD case
-    move_fwd();
-  } else if(PS3.getAnalogHat(LeftHatY) > NOT_USED_SCALE2){ // BKWD case
-     move_bkwd();
-  }else{
-     right_throt = FULL_STOP;
-     left_throt = FULL_STOP;
-  }
-  
-  // Use R2 and l2 to move up and down
-  if(PS3.getAnalogButton(L2) > L2_THRESHOLD  || PS3.getAnalogButton(R2) < R2_THRESHOLD){
-    move_down();
-  }else if(PS3.getAnalogButton(L2) < L2_THRESHOLD  || PS3.getAnalogButton(R2) > R2_THRESHOLD){
-    move_up();
-  }
-  else{
-    front_throt = FULL_STOP;
-    back_throt = FULL_STOP;
-  }
+//  Usb.Task();
+//  // Get analog values to move and steer
+//  if(PS3.getAnalogHat(LeftHatY)  < NOT_USED_SCALE1){ // FWD case
+//    move_fwd();
+//  } else if(PS3.getAnalogHat(LeftHatY) > NOT_USED_SCALE2){ // BKWD case
+//     move_bkwd();
+//  }else{
+//     right_throt = FULL_STOP;
+//     left_throt = FULL_STOP;
+//  }
+//  
+//  // Use R2 and l2 to move up and down
+//  if(PS3.getAnalogButton(L2) > L2_THRESHOLD  || PS3.getAnalogButton(R2) < R2_THRESHOLD){
+//    move_down();
+//  }else if(PS3.getAnalogButton(L2) < L2_THRESHOLD  || PS3.getAnalogButton(R2) > R2_THRESHOLD){
+//    move_up();
+//  }
+//  else{
+//    front_throt = FULL_STOP;
+//    back_throt = FULL_STOP;
+//  }
    print_motor_values(left_throt, right_throt, front_throt, back_throt);
-   write_to_motor();
-//   send_to_mega();
-   delay(2000);
+////   write_to_motor();
+////   send_to_mega();
+//   delay(2000);
 }
 
 
