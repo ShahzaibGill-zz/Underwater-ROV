@@ -1,14 +1,14 @@
 // Pin decrelation
 #define SSerialRX              10  //Serial Receive pin
 #define SSerialTX              3  //Serial Transmit pin
-#define LEFT_M_PIN             5
-#define RIGHT_M_PIN            6
+#define LEFT_M_PIN             4
+#define RIGHT_M_PIN            5
 #define FRONT_M_PIN            7
-#define BACK_M_PIN             8
+#define BACK_M_PIN             6
 
 // Motor Threshold
-#define FULL_CCW_THROT         1000
-#define FULL_CW_THROT          2000
+#define FULL_CCW_THROT         2000
+#define FULL_CW_THROT          1000
 
 // TODO - make this a range if we have a deadzone
 #define FULL_STOP              1500
@@ -31,9 +31,11 @@
 #include <SoftwareSerial.h>
 #include <Servo.h>
 
-const float analong_throt_interval = float(1000)/(float)(2*FULL_DOWN); // 1000 - range of motor write values
-const float turn_scaling_interval = float(1)/float(2*FULL_RIGHT);
-const float elevation_scaling_interval = float(1000)/float(2*MAX_PRESSED); //1000 - range of motor write values
+
+const float interval_scale_down = 1.4;
+const float analong_throt_interval = float(1000)/(float)(2*FULL_DOWN*interval_scale_down); // 1000 - range of motor write values
+const float turn_scaling_interval = float(1)/float(2*FULL_RIGHT*interval_scale_down);
+const float elevation_scaling_interval = float(1000)/float(2*MAX_PRESSED*interval_scale_down); //1000 - range of motor write values
 
 USB Usb;
 PS3USB PS3(&Usb); // Create an instance of PS3
@@ -61,49 +63,49 @@ void send_to_mega();
 void setup() {
   Serial.begin(9600);
   RS485Serial.begin(4800);
-//  if (Usb.Init() == -1) {
-//    Serial.print(F("\r\nOSC did not start"));
-//    while (1);
-//  }
+  if (Usb.Init() == -1) {
+    Serial.print(F("\r\nOSC did not start"));
+    while (1);
+  }
   Serial.print(F("\r\nPS3 USB Library Started"));
   right_motor.attach(RIGHT_M_PIN);
   left_motor.attach(LEFT_M_PIN);
   front_motor.attach(FRONT_M_PIN);
-  back_motor.attach(BACK_M_PIN);
-//  delay(1500); //ample delay
-//  right_motor.writeMicroseconds(FULL_STOP);
-//  left_motor.writeMicroseconds(FULL_STOP);
-//  front_motor.writeMicroseconds(FULL_STOP);
-//  back_motor.writeMicroseconds(FULL_STOP);
+  back_motor.attach(FRONT_M_PIN);
+  delay(1500); //ample delay
+  right_motor.writeMicroseconds(FULL_STOP);
+  left_motor.writeMicroseconds(FULL_STOP);
+  front_motor.writeMicroseconds(FULL_STOP);
+  back_motor.writeMicroseconds(FULL_STOP);
 }
 
 
 void loop() {
-//  Usb.Task();
-//  // Get analog values to move and steer
-//  if(PS3.getAnalogHat(LeftHatY)  < NOT_USED_SCALE1){ // FWD case
-//    move_fwd();
-//  } else if(PS3.getAnalogHat(LeftHatY) > NOT_USED_SCALE2){ // BKWD case
-//     move_bkwd();
-//  }else{
-//     right_throt = FULL_STOP;
-//     left_throt = FULL_STOP;
-//  }
-//  
-//  // Use R2 and l2 to move up and down
-//  if(PS3.getAnalogButton(L2) > L2_THRESHOLD  || PS3.getAnalogButton(R2) < R2_THRESHOLD){
-//    move_down();
-//  }else if(PS3.getAnalogButton(L2) < L2_THRESHOLD  || PS3.getAnalogButton(R2) > R2_THRESHOLD){
-//    move_up();
-//  }
-//  else{
-//    front_throt = FULL_STOP;
-//    back_throt = FULL_STOP;
-//  }
-   print_motor_values(left_throt, right_throt, front_throt, back_throt);
-////   write_to_motor();
-////   send_to_mega();
-//   delay(2000);
+  Usb.Task();
+  // Get analog values to move and steer
+  if(PS3.getAnalogHat(LeftHatY)  < NOT_USED_SCALE1){ // FWD case
+    move_fwd();
+  } else if(PS3.getAnalogHat(LeftHatY) > NOT_USED_SCALE2){ // BKWD case
+     move_bkwd();
+  }else{
+     right_throt = FULL_STOP;
+     left_throt = FULL_STOP;
+  }
+  
+  // Use R2 and l2 to move up and down
+  if(PS3.getAnalogButton(L2) > L2_THRESHOLD  || PS3.getAnalogButton(R2) < R2_THRESHOLD){
+    move_down();
+  }else if(PS3.getAnalogButton(L2) < L2_THRESHOLD  || PS3.getAnalogButton(R2) > R2_THRESHOLD){
+    move_up();
+  }
+  else{
+    front_throt = FULL_STOP;
+    back_throt = FULL_STOP;
+  }
+   print_motor_values(right_throt, left_throt, front_throt, back_throt);
+//   write_to_motor();
+   send_to_mega();
+   delay(10);
 }
 
 
@@ -112,10 +114,9 @@ void send_to_mega(){
   if(left_throt == FULL_STOP && right_throt == FULL_STOP && front_throt == FULL_STOP &&  back_throt == FULL_STOP){
     write_to_RS_Serial = String("*");
   } else{
-    write_to_RS_Serial = String("(" +String(left_throt) + String(right_throt) + String(front_throt) + String(back_throt) + ")");
+    write_to_RS_Serial = String("[" +String(left_throt) + String(right_throt) + String(front_throt) + String(back_throt) + "]");
   }
   RS485Serial.write(write_to_RS_Serial.c_str());          // Send byte to Remote Arduino
-//  Serial.write(test_string.c_str());
 }
 
 // ---------------------- HELPER functions -  motion ---------------------------//
