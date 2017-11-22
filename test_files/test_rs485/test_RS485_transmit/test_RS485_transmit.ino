@@ -34,7 +34,6 @@ const float elevation_scaling_interval = float(1000)/float(2*MAX_PRESSED); //100
 USB Usb;
 PS3USB PS3(&Usb); // Create an instance of PS3
 SoftwareSerial RS485Serial(SSerialRX, SSerialTX); // RX, TX
-Servo right_motor, left_motor, back_motor, front_motor;
 
 int left_throt, right_throt, front_throt, back_throt; //Throttle applied to each motors
 String write_to_RS_Serial;
@@ -67,10 +66,6 @@ void setup()   /****** SETUP: RUNS ONCE ******/
     while (1);
   }
   Serial.print(F("\r\nPS3 USB Library Started"));
-  right_motor.attach(RIGHT_M_PIN);
-  left_motor.attach(LEFT_M_PIN);
-  front_motor.attach(FRONT_M_PIN);
-  back_motor.attach(BACK_M_PIN);
 }//--(end setup )---
 
 
@@ -97,7 +92,7 @@ void loop()   /****** LOOP: RUNS CONSTANTLY ******/
     back_throt = FULL_STOP;
   }
   
-  print_motor_values(left_throt, right_throt, front_throt, back_throt);
+//  print_motor_values(left_throt, right_throt, front_throt, back_throt);
 ////   write_to_motor();
   send_to_mega();
 //  if (Serial.available())
@@ -118,8 +113,11 @@ void send_to_mega(){
   } else{
     write_to_RS_Serial = String("(" +String(left_throt) + String(right_throt) + String(front_throt) + String(back_throt) + ")");
   }
+
+  Serial.write(write_to_RS_Serial.c_str());
   RS485Serial.write(write_to_RS_Serial.c_str());          // Send byte to Remote Arduino
 //  Serial.write(test_string.c_str());
+  delay(100);
 }
 
 // ---------------------- HELPER functions -  motion ---------------------------//
@@ -174,9 +172,3 @@ void print_motor_values(int left,int right, int front, int back){
     Serial.print(back);
 }
 
-void write_to_motor(){
-  left_motor.writeMicroseconds(left_throt);
-  right_motor.writeMicroseconds(right_throt);
-  front_motor.writeMicroseconds(front_throt);
-  back_motor.writeMicroseconds(back_throt);
-}
