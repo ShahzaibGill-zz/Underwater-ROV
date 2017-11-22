@@ -27,9 +27,11 @@
 #define L2_THRESHOLD           30
 #define R2_THRESHOLD           30
 
-const float analong_throt_interval = float(1000)/(float)(2*FULL_DOWN); // 1000 - range of motor write values
-const float turn_scaling_interval = float(1)/float(2*FULL_RIGHT);
-const float elevation_scaling_interval = float(1000)/float(2*MAX_PRESSED); //1000 - range of motor write values
+const float THRUST_INTERVAL_SCALE_DOWN = 1.4;
+const float TURN_INTERVAL_SCALE_DOWN = 1.3;
+const float ANALOG_THROT_INTERVAL = float(1000)/(float)(2*FULL_DOWN*THRUST_INTERVAL_SCALE_DOWN); // 1000 - range of motor write values
+const float TURN_SCALING_INTERVAL = float(1)/float(2*FULL_RIGHT*TURN_INTERVAL_SCALE_DOWN);
+const float ELEVATION_SCALING_INTERVAL = float(1000)/float(2*MAX_PRESSED*THRUST_INTERVAL_SCALE_DOWN); //1000 - range of motor write values
 
 USB Usb;
 PS3USB PS3(&Usb); // Create an instance of PS3
@@ -92,7 +94,7 @@ void loop()   /****** LOOP: RUNS CONSTANTLY ******/
     back_throt = FULL_STOP;
   }
   
-//  print_motor_values(left_throt, right_throt, front_throt, back_throt);
+  print_motor_values(left_throt, right_throt, front_throt, back_throt);
 ////   write_to_motor();
   send_to_mega();
 //  if (Serial.available())
@@ -117,7 +119,7 @@ void send_to_mega(){
   Serial.write(write_to_RS_Serial.c_str());
   RS485Serial.write(write_to_RS_Serial.c_str());          // Send byte to Remote Arduino
 //  Serial.write(test_string.c_str());
-  delay(100);
+//  delay(100);
 }
 
 // ---------------------- HELPER functions -  motion ---------------------------//
@@ -125,13 +127,13 @@ void send_to_mega(){
 void move_fwd(){
   if(PS3.getAnalogHat(LeftHatY) < NOT_USED_SCALE1){ // check FWD motion in f'ns as well
     // 128 -> 0 map to 1500 -> 2000 motr values - Use FULL_DOWN(255) as refernce point
-    right_throt = (float)FULL_STOP + ((float)FULL_DOWN - (float)PS3.getAnalogHat(LeftHatY))* analong_throt_interval;
-    left_throt = (float)FULL_STOP + ((float)FULL_DOWN -  (float)PS3.getAnalogHat(LeftHatY))* analong_throt_interval;
+    right_throt = (float)FULL_STOP + ((float)FULL_DOWN - (float)PS3.getAnalogHat(LeftHatY))* ANALOG_THROT_INTERVAL;
+    left_throt = (float)FULL_STOP + ((float)FULL_DOWN -  (float)PS3.getAnalogHat(LeftHatY))* ANALOG_THROT_INTERVAL;
     if(PS3.getAnalogHat(RightHatX) < NOT_USED_SCALE1){ // left turn
         // same logic as FWD motion - 128 -> 0 map to change in throttle 
-        left_throt = left_throt*(1.00 - ((float)FULL_RIGHT - (float)PS3.getAnalogHat(RightHatX))*turn_scaling_interval*0.5);
+        left_throt = left_throt*(1.00 - ((float)FULL_RIGHT - (float)PS3.getAnalogHat(RightHatX))*TURN_SCALING_INTERVAL*0.5);
     } else if(PS3.getAnalogHat(RightHatX) > NOT_USED_SCALE2){ // right turn
-        right_throt = right_throt*(1.00 - (float)PS3.getAnalogHat(RightHatX)*turn_scaling_interval*0.5);
+        right_throt = right_throt*(1.00 - (float)PS3.getAnalogHat(RightHatX)*TURN_SCALING_INTERVAL*0.5);
     }
   }
 }
@@ -139,24 +141,24 @@ void move_fwd(){
 // Inverse FWD logic
 void move_bkwd(){
   if(PS3.getAnalogHat(LeftHatY) > NOT_USED_SCALE1){ //check BKWD motion in f'ns as well
-    right_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(LeftHatY)* analong_throt_interval;
-    left_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(LeftHatY)* analong_throt_interval;
+    right_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(LeftHatY)* ANALOG_THROT_INTERVAL;
+    left_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(LeftHatY)* ANALOG_THROT_INTERVAL;
     if(PS3.getAnalogHat(RightHatX) < NOT_USED_SCALE1){ // left turn
-        left_throt = left_throt*(1.00 + ((float)FULL_RIGHT - (float)PS3.getAnalogHat(RightHatX))*turn_scaling_interval);
+        left_throt = left_throt*(1.00 + ((float)FULL_RIGHT - (float)PS3.getAnalogHat(RightHatX))*TURN_SCALING_INTERVAL);
     } else if(PS3.getAnalogHat(RightHatX) > NOT_USED_SCALE2){ // right turn
-        right_throt = right_throt*(1.00 + (float)PS3.getAnalogHat(RightHatX)*turn_scaling_interval);
+        right_throt = right_throt*(1.00 + (float)PS3.getAnalogHat(RightHatX)*TURN_SCALING_INTERVAL);
     }
   }
 }
 
 void move_up(){
-  front_throt = (float)FULL_STOP + (float)PS3.getAnalogButton(R2)* elevation_scaling_interval;
-  back_throt = (float)FULL_STOP +  (float)PS3.getAnalogButton(R2)* elevation_scaling_interval;
+  front_throt = (float)FULL_STOP + (float)PS3.getAnalogButton(R2)* ELEVATION_SCALING_INTERVAL;
+  back_throt = (float)FULL_STOP +  (float)PS3.getAnalogButton(R2)* ELEVATION_SCALING_INTERVAL;
 }
 
 void move_down(){
-  front_throt = (float)FULL_STOP - (float)PS3.getAnalogButton(L2)* elevation_scaling_interval;
-  back_throt = (float)FULL_STOP - (float)PS3.getAnalogButton(L2)* elevation_scaling_interval;
+  front_throt = (float)FULL_STOP - (float)PS3.getAnalogButton(L2)* ELEVATION_SCALING_INTERVAL;
+  back_throt = (float)FULL_STOP - (float)PS3.getAnalogButton(L2)* ELEVATION_SCALING_INTERVAL;
 }
 
 // ---------------------- TESTING functions - remove in final design ---------------------------//
