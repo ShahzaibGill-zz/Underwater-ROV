@@ -7,8 +7,8 @@
 #define SSerialTX              3  //Serial Transmit pin
 
 // Motor Threshold
-#define FULL_CCW_THROT         1000
-#define FULL_CW_THROT          2000
+#define FULL_CCW_THROT         1300
+#define FULL_CW_THROT          1700
 
 // TODO - make this a range if we have a deadzone
 #define FULL_STOP              1500
@@ -27,6 +27,10 @@
 #define L2_THRESHOLD           30
 #define R2_THRESHOLD           30
 
+const int FULL_STOP_LEFT=1500;
+const int FULL_STOP_BACK=1500;
+const int FULL_STOP_FRONT=1550;
+const int FULL_STOP_RIGHT=1500;
 const float THRUST_INTERVAL_SCALE_DOWN = 1.4;
 const float TURN_INTERVAL_SCALE_DOWN = 1.3;
 const float ANALOG_THROT_INTERVAL = float(1000)/(float)(2*FULL_DOWN*THRUST_INTERVAL_SCALE_DOWN); // 1000 - range of motor write values
@@ -80,24 +84,24 @@ void loop()   /****** LOOP: RUNS CONSTANTLY ******/
   } else if(PS3.getAnalogHat(LeftHatY) > NOT_USED_SCALE2){ // BKWD case
      move_bkwd();
   }else{
-     right_throt = FULL_STOP;
-     left_throt = FULL_STOP;
+     right_throt = FULL_STOP_RIGHT;
+     left_throt = FULL_STOP_LEFT;
   }
   // Use R2 and l2 to move up and down
-  if(PS3.getAnalogButton(L2) > L2_THRESHOLD  || PS3.getAnalogButton(R2) < R2_THRESHOLD){
+  if(PS3.getAnalogButton(L2) > L2_THRESHOLD  && PS3.getAnalogButton(R2) < R2_THRESHOLD){
     move_down();
-  }else if(PS3.getAnalogButton(L2) < L2_THRESHOLD  || PS3.getAnalogButton(R2) > R2_THRESHOLD){
+  }else if(PS3.getAnalogButton(L2) < L2_THRESHOLD  && PS3.getAnalogButton(R2) > R2_THRESHOLD){
     move_up();
   }
   else{
-    front_throt = FULL_STOP;
-    back_throt = FULL_STOP;
+    front_throt = FULL_STOP_FRONT;
+    back_throt = FULL_STOP_BACK;
   }
   
   print_motor_values(left_throt, right_throt, front_throt, back_throt);
 ////   write_to_motor();
   send_to_mega();
-  delay(100);
+  delay(200);
 //  if (Serial.available())
 //  {
 //    String byteReceived= "(1500200025003000)";
@@ -111,7 +115,7 @@ void loop()   /****** LOOP: RUNS CONSTANTLY ******/
 
 // ---------------------- HELPER functions -  communication ---------------------------//
 void send_to_mega(){
-  if(left_throt == FULL_STOP && right_throt == FULL_STOP && front_throt == FULL_STOP &&  back_throt == FULL_STOP){
+  if(left_throt == FULL_STOP_LEFT && right_throt == FULL_STOP_RIGHT && front_throt == FULL_STOP_FRONT &&  back_throt == FULL_STOP_BACK){
     write_to_RS_Serial = String("*");
   } else{
     write_to_RS_Serial = String("(" +String(left_throt) + String(right_throt) + String(front_throt) + String(back_throt) + ")");
@@ -128,13 +132,17 @@ void send_to_mega(){
 void move_fwd(){
   if(PS3.getAnalogHat(LeftHatY) < NOT_USED_SCALE1){ // check FWD motion in f'ns as well
     // 128 -> 0 map to 1500 -> 2000 motr values - Use FULL_DOWN(255) as refernce point
-    right_throt = (float)FULL_STOP + ((float)FULL_DOWN - (float)PS3.getAnalogHat(LeftHatY))* ANALOG_THROT_INTERVAL;
-    left_throt = (float)FULL_STOP + ((float)FULL_DOWN -  (float)PS3.getAnalogHat(LeftHatY))* ANALOG_THROT_INTERVAL;
+//    right_throt = (float)FULL_STOP + ((float)FULL_DOWN - (float)PS3.getAnalogHat(LeftHatY))* ANALOG_THROT_INTERVAL;
+//    left_throt = (float)FULL_STOP + ((float)FULL_DOWN -  (float)PS3.getAnalogHat(LeftHatY))* ANALOG_THROT_INTERVAL;
+      right_throt = FULL_CW_THROT;
+      left_throt = FULL_CW_THROT;
     if(PS3.getAnalogHat(RightHatX) < NOT_USED_SCALE1){ // left turn
         // same logic as FWD motion - 128 -> 0 map to change in throttle 
-        left_throt = left_throt*(1.00 - ((float)FULL_RIGHT - (float)PS3.getAnalogHat(RightHatX))*TURN_SCALING_INTERVAL*0.5);
+//        left_throt = left_throt*(1.00 - ((float)FULL_RIGHT - (float)PS3.getAnalogHat(RightHatX))*TURN_SCALING_INTERVAL*0.5);
+        left_throt = FULL_STOP_LEFT;
     } else if(PS3.getAnalogHat(RightHatX) > NOT_USED_SCALE2){ // right turn
-        right_throt = right_throt*(1.00 - (float)PS3.getAnalogHat(RightHatX)*TURN_SCALING_INTERVAL*0.5);
+//        right_throt = right_throt*(1.00 - (float)PS3.getAnalogHat(RightHatX)*TURN_SCALING_INTERVAL*0.5);
+          right_throt = FULL_STOP_RIGHT;
     }
   }
 }
@@ -142,24 +150,32 @@ void move_fwd(){
 // Inverse FWD logic
 void move_bkwd(){
   if(PS3.getAnalogHat(LeftHatY) > NOT_USED_SCALE1){ //check BKWD motion in f'ns as well
-    right_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(LeftHatY)* ANALOG_THROT_INTERVAL;
-    left_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(LeftHatY)* ANALOG_THROT_INTERVAL;
+//    right_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(LeftHatY)* ANALOG_THROT_INTERVAL;
+//    left_throt = (float)FULL_STOP - (float)PS3.getAnalogHat(LeftHatY)* ANALOG_THROT_INTERVAL;
+      right_throt = FULL_CCW_THROT;
+      left_throt = FULL_CCW_THROT;
     if(PS3.getAnalogHat(RightHatX) < NOT_USED_SCALE1){ // left turn
-        left_throt = left_throt*(1.00 + ((float)FULL_RIGHT - (float)PS3.getAnalogHat(RightHatX))*TURN_SCALING_INTERVAL);
+//        left_throt = left_throt*(1.00 + ((float)FULL_RIGHT - (float)PS3.getAnalogHat(RightHatX))*TURN_SCALING_INTERVAL);
+      left_throt = FULL_STOP_LEFT;
     } else if(PS3.getAnalogHat(RightHatX) > NOT_USED_SCALE2){ // right turn
-        right_throt = right_throt*(1.00 + (float)PS3.getAnalogHat(RightHatX)*TURN_SCALING_INTERVAL);
+//        right_throt = right_throt*(1.00 + (float)PS3.getAnalogHat(RightHatX)*TURN_SCALING_INTERVAL);
+      right_throt = FULL_STOP_RIGHT;
     }
   }
 }
 
 void move_up(){
-  front_throt = (float)FULL_STOP + (float)PS3.getAnalogButton(R2)* ELEVATION_SCALING_INTERVAL;
-  back_throt = (float)FULL_STOP +  (float)PS3.getAnalogButton(R2)* ELEVATION_SCALING_INTERVAL;
+//  front_throt = (float)FULL_STOP + (float)PS3.getAnalogButton(R2)* ELEVATION_SCALING_INTERVAL;
+//  back_throt = (float)FULL_STOP +  (float)PS3.getAnalogButton(R2)* ELEVATION_SCALING_INTERVAL;
+    front_throt = FULL_CW_THROT;
+    back_throt = FULL_CW_THROT;
 }
 
 void move_down(){
-  front_throt = (float)FULL_STOP - (float)PS3.getAnalogButton(L2)* ELEVATION_SCALING_INTERVAL;
-  back_throt = (float)FULL_STOP - (float)PS3.getAnalogButton(L2)* ELEVATION_SCALING_INTERVAL;
+//  front_throt = (float)FULL_STOP - (float)PS3.getAnalogButton(L2)* ELEVATION_SCALING_INTERVAL;
+//  back_throt = (float)FULL_STOP - (float)PS3.getAnalogButton(L2)* ELEVATION_SCALING_INTERVAL;
+    front_throt = FULL_CCW_THROT;
+    back_throt = FULL_CCW_THROT;
 }
 
 // ---------------------- TESTING functions - remove in final design ---------------------------//

@@ -14,8 +14,8 @@ class MotorControl {
   const int STOP_MOTOR_RIGHT = 1500;
   const int STOP_MOTOR_FRONT= 1550;
   const int STOP_MOTOR_BACK = 1500;
-  const int FULL_CCW_THROT = 1060;
-  const int FULL_CW_THROT = 1860;
+  const int FULL_CCW_THROT = 1300;
+  const int FULL_CW_THROT = 1800;
   
   public:
   Servo RIGHT_MOTOR, LEFT_MOTOR, BACK_MOTOR, FRONT_MOTOR;

@@ -31,7 +31,7 @@ void setup() {
 
 void loop() {
   receiver.ReadPS3Values();
-  Serial.println(receiver.leftMotorValue);
+  Serial.println(receiver.frontMotorValue);
   motorControl.WriteToMotors(receiver.leftMotorValue,receiver.backMotorValue,receiver.frontMotorValue,receiver.rightMotorValue);
 //  motorControl.WriteToMotors(1500,1500,1550,1500);
 //   Left, Back, Right, Front
