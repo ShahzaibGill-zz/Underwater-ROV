@@ -14,7 +14,7 @@ void RS485_Receive::Initialize(){
 
 
 int RS485_Receive::GetMotorValue(char allMotorValues[], int index){
-  char motorValue[4];
+  char motorValue[5];
   for (int i = 0; i < 4; i++){
     motorValue[i] = allMotorValues[index++];
   };
@@ -35,10 +35,15 @@ void RS485_Receive::ReadPS3Values(){
       motorValues[index++] = charReceived;
     }
     if (PARSE_VALUES) {
-      leftMotorValue = GetMotorValue(motorValues, LEFT_MOTOR_INDEX);
-      rightMotorValue = GetMotorValue(motorValues, RIGHT_MOTOR_INDEX);
-      frontMotorValue = GetMotorValue(motorValues, FRONT_MOTOR_INDEX);
-      backMotorValue = GetMotorValue(motorValues, BACK_MOTOR_INDEX);
+      String motorValuesString = motorValues;
+//      leftMotorValue = GetMotorValue(motorValues, LEFT_MOTOR_INDEX);
+//      rightMotorValue = GetMotorValue(motorValues, RIGHT_MOTOR_INDEX);
+//      frontMotorValue = GetMotorValue(motorValues, FRONT_MOTOR_INDEX);
+//      backMotorValue = GetMotorValue(motorValues, BACK_MOTOR_INDEX);
+      leftMotorValue = motorValuesString.substring(0,4).toInt();
+      rightMotorValue = motorValuesString.substring(4,8).toInt();
+      frontMotorValue = motorValuesString.substring(8,12).toInt();
+      backMotorValue = motorValuesString.substring(12,16).toInt();
       PARSE_VALUES = false;
       index = 0;
     }

@@ -97,6 +97,7 @@ void loop()   /****** LOOP: RUNS CONSTANTLY ******/
   print_motor_values(left_throt, right_throt, front_throt, back_throt);
 ////   write_to_motor();
   send_to_mega();
+  delay(100);
 //  if (Serial.available())
 //  {
 //    String byteReceived= "(1500200025003000)";
@@ -116,7 +117,7 @@ void send_to_mega(){
     write_to_RS_Serial = String("(" +String(left_throt) + String(right_throt) + String(front_throt) + String(back_throt) + ")");
   }
 
-  Serial.write(write_to_RS_Serial.c_str());
+//  Serial.write(write_to_RS_Serial.c_str());
   RS485Serial.write(write_to_RS_Serial.c_str());          // Send byte to Remote Arduino
 //  Serial.write(test_string.c_str());
 //  delay(100);
