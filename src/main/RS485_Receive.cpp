@@ -60,14 +60,3 @@ void RS485_Receive::ReadPS3Values(){
   }
 }
 
-
-void RS485_Receive::PrintMotorValues(int left,int right, int front, int back){
-    Serial.print(F("\r\n: left "));
-    Serial.print(left);
-    Serial.print(F("\r: right "));
-    Serial.print(right);
-    Serial.print(F("\r: front "));
-    Serial.print(front);
-    Serial.print(F("\r: back"));
-    Serial.print(back);
-}

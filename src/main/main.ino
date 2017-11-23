@@ -30,19 +30,21 @@ void setup() {
 void loop() {
 
 /* Reading motor values from PS3 Controller*/
-  receiver.ReadPS3Values();
+//  receiver.ReadPS3Values();
+//  Serial.println(receiver.leftMotorValue);
+  
 // Assume motors work
 //  motorControl.WriteToMotors(receiver.leftMotorValue,receiver.backMotorValue,receiver.frontMotorValue,receiver.rightMotorValue);
 
 /* Get pitch, yaw, roll measurements from IMU */
   imu.MeasureIMU();
   pitch = imu.getPitch();
-//  Serial.print(F("Pitch: "));
-//  Serial.println(pitch);
+  Serial.print(F("Pitch: "));
+  Serial.println(pitch);
 
 /* Pitch PID Control Example - Parameter values may need to be tuned */
   int pitchControlValue = PitchPID.GetPIDControlValue(pitch);
   Serial.println(pitchControlValue);
   motorControl.WriteToMotors(1500,1500+pitchControlValue,1550,1500);
-//  motorControl.WriteToMotors(receiver.leftMotorValue,receiver.backMotorValue+pitchControlValue,receiver.frontMotorValue-pitchControlValue,receiver.rightMotorValue);
+  motorControl.WriteToMotors(receiver.leftMotorValue,receiver.backMotorValue+pitchControlValue,receiver.frontMotorValue-pitchControlValue,receiver.rightMotorValue);
 }

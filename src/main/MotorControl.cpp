@@ -35,14 +35,3 @@ void MotorControl::WriteToMotors(int leftMotorValue, int backMotorValue, int fro
   BACK_MOTOR.writeMicroseconds(backMotorValue);
 }
 
-void MotorControl::PrintMotorValues(int left, int back, int front, int right){
-    Serial.print(F("\r\n: left "));
-    Serial.print(left);
-    Serial.print(F("\r: right "));
-    Serial.print(right);
-    Serial.print(F("\r: front "));
-    Serial.print(front);
-    Serial.print(F("\r: back"));
-    Serial.print(back);
-}
-

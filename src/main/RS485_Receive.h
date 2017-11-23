@@ -36,7 +36,6 @@ class RS485_Receive {
   void Initialize();
   int GetMotorValue(char*, int);
   void ReadPS3Values();
-  void PrintMotorValues(int left,int right, int front, int back);
 };
 
 #endif

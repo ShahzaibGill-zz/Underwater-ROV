@@ -24,7 +24,6 @@ class MotorControl {
   void Initialize();
   void Calibrate();
   void WriteToMotors(int leftMotorValue, int backMotorValue, int frontMotorValue, int rightMotorValue);
-  void PrintMotorValues(int left,int right, int front, int back);
 };
 
 #endif
