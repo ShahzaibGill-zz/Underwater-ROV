@@ -8,7 +8,7 @@
 
 // Motor Threshold
 #define FULL_CCW_THROT         1300
-#define FULL_CW_THROT          1700
+#define FULL_CW_THROT          1600
 
 // TODO - make this a range if we have a deadzone
 #define FULL_STOP              1500
@@ -29,7 +29,7 @@
 
 const int FULL_STOP_LEFT=1500;
 const int FULL_STOP_BACK=1500;
-const int FULL_STOP_FRONT=1550;
+const int FULL_STOP_FRONT=1500;
 const int FULL_STOP_RIGHT=1500;
 const float THRUST_INTERVAL_SCALE_DOWN = 1.4;
 const float TURN_INTERVAL_SCALE_DOWN = 1.3;

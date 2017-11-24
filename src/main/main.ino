@@ -13,7 +13,7 @@ double roll,yaw,pitch;
 
 /* PID variable initialization */
 PIDControl PitchPID;
-// setpoint (desired value), agressive,conservative tuning parameters for PitchPID
+ setpoint (desired value), agressive,conservative tuning parameters for PitchPID
 double pitch_setpoint = 0, pitch_aggKp = 4, pitch_aggKi = 0, pitch_aggKd = 1, pitch_consKp = 2, pitch_consKi = 0, pitch_consKd = 0.5;
 
 
@@ -24,17 +24,14 @@ void setup() {
   PitchPID.Initialize(pitch_setpoint,pitch_aggKp,pitch_aggKi,pitch_aggKd,pitch_consKp,pitch_consKi,pitch_consKd);
   motorControl.Initialize();
   Serial.println("Initialization Complete");
-  delay(1000);
+  //delay(1000);
 }
 
 void loop() {
 
 /* Reading motor values from PS3 Controller*/
-//  receiver.ReadPS3Values();
-//  Serial.println(receiver.leftMotorValue);
-  
-// Assume motors work
-//  motorControl.WriteToMotors(receiver.leftMotorValue,receiver.backMotorValue,receiver.frontMotorValue,receiver.rightMotorValue);
+  receiver.ReadPS3Values();
+   motorControl.WriteToMotors(receiver.leftMotorValue,receiver.backMotorValue,receiver.frontMotorValue,receiver.rightMotorValue);
 
 /* Get pitch, yaw, roll measurements from IMU */
   imu.MeasureIMU();

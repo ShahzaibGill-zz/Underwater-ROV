@@ -19,14 +19,21 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  run_motors(1800,1800,1800,1800);
-//  delay(2000);
+  Serial.print("hi");
+  run_motors(1600, 1500, 1500, 1600);
+  delay(2000);
+  run_motors(1500, 1500, 1500, 1500);
+  delay(20000);
+  
 //  run_motors(1500,1500,1500,1500);
 //  delay(2000);
 //  run_motors(1700,1700,1700,1700);
 //  delay(2000);
 //  run_motors(1500,1500,1500,1500);
 //  delay(10000);
+
+//  run_motors_write(150,150,150,150);
+//  delay(2000);
 }
 
 
@@ -36,5 +43,14 @@ void run_motors(int m1val, int m2val, int m3val, int m4val)
   MOTOR2.writeMicroseconds(m2val);
   MOTOR3.writeMicroseconds(m3val);
   MOTOR4.writeMicroseconds(m4val);
+
+}
+
+void run_motors_write(int m1val, int m2val, int m3val, int m4val)
+{
+  MOTOR1.write(m1val);
+  MOTOR2.write(m2val);
+  MOTOR3.write(m3val);
+  MOTOR4.write(m4val);
 
 }
