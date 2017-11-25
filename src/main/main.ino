@@ -42,6 +42,5 @@ void loop() {
 /* Pitch PID Control Example - Parameter values may need to be tuned */
   int pitchControlValue = PitchPID.GetPIDControlValue(pitch);
   Serial.println(pitchControlValue);
-  motorControl.WriteToMotors(1500,1500+pitchControlValue,1550,1500);
   motorControl.WriteToMotors(receiver.leftMotorValue,receiver.backMotorValue+pitchControlValue,receiver.frontMotorValue-pitchControlValue,receiver.rightMotorValue);
 }
