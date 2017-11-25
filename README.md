@@ -1,5 +1,5 @@
 # Underwater Remove Operated Vehicle (ROV)
-Creating an underwater remote operated vehicle
+An underwater ROV (Remote Operated Vehicle) capable of traversing an obstacle course. The ROV uses the RS485 protocol (rated for long distances) for teleops using a PS3 controller. PID controller allows for stabilization of pitch and maintaining a stable depth.
 
 
 ## Required Arduino Libraries
